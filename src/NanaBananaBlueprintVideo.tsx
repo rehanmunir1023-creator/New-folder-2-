@@ -9,18 +9,41 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { loadFont as loadOrbitron } from "@remotion/google-fonts/Orbitron";
-import { loadFont as loadRajdhani } from "@remotion/google-fonts/Rajdhani";
+import { ORBITRON_B64, RAJDHANI_BOLD_B64, RAJDHANI_REG_B64 } from "./fonts";
 
-// ── Fonts (loaded at module level per best practices) ────────────────────────
-const { fontFamily: ORBITRON } = loadOrbitron("normal", {
-  weights: ["400", "700", "900"],
-  subsets: ["latin"],
-});
-const { fontFamily: RAJDHANI } = loadRajdhani("normal", {
-  weights: ["400", "600", "700"],
-  subsets: ["latin"],
-});
+// ── Fonts: injected as base64 data URIs — no network requests during render ──
+const ORBITRON = "Orbitron";
+const RAJDHANI = "Rajdhani";
+
+const FONT_CSS = `
+@font-face {
+  font-family: '${ORBITRON}';
+  src: url('data:font/woff2;base64,${ORBITRON_B64}') format('woff2');
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: '${RAJDHANI}';
+  src: url('data:font/woff2;base64,${RAJDHANI_REG_B64}') format('woff2');
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: '${RAJDHANI}';
+  src: url('data:font/woff2;base64,${RAJDHANI_BOLD_B64}') format('woff2');
+  font-weight: 600 700;
+  font-display: block;
+}
+`;
+
+// Inject @font-face CSS at module load. No delayRender needed:
+// base64 fonts have no network round-trip, so font-display:block ensures
+// they are available before the browser paints any frame.
+if (typeof document !== "undefined") {
+  const styleEl = document.createElement("style");
+  styleEl.textContent = FONT_CSS;
+  document.head.appendChild(styleEl);
+}
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 const C = {
