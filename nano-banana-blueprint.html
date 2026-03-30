@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Nano Banana Pro Prompting Blueprint</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #f97316;
+    --purple: #7c3aed;
+    --teal: #0d9488;
+    --dark: #1e1b4b;
+    --pink: #db2777;
+    --blue: #2563eb;
+    --gold: #d97706;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.12);
+    max-width: 1100px;
+    width: 100%;
+    padding: 36px 40px 44px;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 10px;
+    opacity: 0;
+    animation: fadeDown 0.7s 0.1s forwards;
+  }
+  .header h1 {
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 900;
+    color: var(--dark);
+    line-height: 1.2;
+  }
+  .header h1 span { color: var(--orange); }
+  .header p {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #64748b;
+    max-width: 680px;
+    margin-inline: auto;
+    line-height: 1.6;
+  }
+
+  /* ── LAYOUT ── */
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-top: 22px;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--dark);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  /* ── WHEEL ── */
+  .wheel-wrapper {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeIn 0.8s 0.5s forwards;
+  }
+
+  .wheel-svg {
+    width: 100%;
+    height: 100%;
+    animation: rotateSlow 30s linear infinite;
+    transform-origin: center;
+  }
+
+  .wheel-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 108px; height: 108px;
+    background: radial-gradient(circle, #1e1b4b 0%, #312e81 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    padding: 10px;
+    box-shadow: 0 0 0 6px rgba(255,255,255,0.9), 0 0 0 10px rgba(124,58,237,0.2);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  .wheel-labels {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+
+  .w-label {
+    position: absolute;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--dark);
+    text-align: center;
+    line-height: 1.35;
+    max-width: 90px;
+    opacity: 0;
+  }
+  .w-label span { font-weight: 400; color: #475569; font-size: 9px; }
+
+  /* positions around the wheel */
+  .w-label.subject  { top: -2px;  left: 50%; transform: translateX(-50%); animation: fadeIn 0.5s 1.1s forwards; }
+  .w-label.action   { top: 18px;  right: -4px; animation: fadeIn 0.5s 1.2s forwards; }
+  .w-label.env      { bottom: 28px; right: -12px; animation: fadeIn 0.5s 1.3s forwards; }
+  .w-label.art      { bottom: -4px; left: 50%; transform: translateX(-50%); animation: fadeIn 0.5s 1.4s forwards; }
+  .w-label.lighting { bottom: 28px; left: -8px; animation: fadeIn 0.5s 1.5s forwards; }
+  .w-label.details  { top: 18px;  left: -8px; animation: fadeIn 0.5s 1.6s forwards; }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── COMPARISON TABLE ── */
+  .comparison {
+    opacity: 0;
+    animation: fadeRight 0.7s 0.8s forwards;
+  }
+  .comp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1.5px solid #e2e8f0;
+  }
+  .comp-header {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .comp-header.beginner { background: #bfdbfe; color: #1e40af; }
+  .comp-header.pro      { background: #6d28d9; color: #fff; }
+
+  .comp-row {
+    display: contents;
+  }
+  .comp-cell {
+    padding: 10px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid #e2e8f0;
+    line-height: 1.5;
+  }
+  .comp-cell.beginner-cell {
+    background: #eff6ff;
+    color: #334155;
+  }
+  .comp-cell.pro-cell {
+    background: #fdf4ff;
+    color: #334155;
+    border-left: 1px solid #e2e8f0;
+  }
+  .comp-cell strong { color: var(--dark); display: block; margin-bottom: 2px; }
+
+  .comp-row:nth-child(odd) .beginner-cell { background: #dbeafe; }
+  .comp-row:nth-child(odd) .pro-cell      { background: #ede9fe; }
+
+  /* ── EXPERT TECHNIQUES ── */
+  .expert {
+    opacity: 0;
+    animation: fadeRight 0.7s 1.1s forwards;
+  }
+  .expert-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .technique-card {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    transition: transform 0.25s, box-shadow 0.25s;
+    cursor: default;
+    opacity: 0;
+  }
+  .technique-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+  }
+  .technique-card:nth-child(1) { animation: fadeUp 0.5s 1.4s forwards; }
+  .technique-card:nth-child(2) { animation: fadeUp 0.5s 1.6s forwards; }
+  .technique-card:nth-child(3) { animation: fadeUp 0.5s 1.8s forwards; }
+
+  .tech-icon {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .tech-icon.cam  { background: linear-gradient(135deg, #f97316, #ef4444); }
+  .tech-icon.arch { background: linear-gradient(135deg, #f59e0b, #f97316); }
+  .tech-icon.auth { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+
+  .technique-card h4 { font-size: 11px; font-weight: 800; color: var(--dark); line-height: 1.3; margin-bottom: 5px; }
+  .technique-card p  { font-size: 10px; color: #64748b; line-height: 1.5; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown  { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeRight { from { opacity:0; transform:translateX(20px);  } to { opacity:1; transform:translateX(0); } }
+  @keyframes fadeUp    { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn    { from { opacity:0; }                              to { opacity:1; } }
+  @keyframes rotateSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 6px rgba(255,255,255,0.9), 0 0 0 10px rgba(124,58,237,0.2); }
+    50%      { box-shadow: 0 0 0 6px rgba(255,255,255,0.9), 0 0 0 18px rgba(124,58,237,0.1); }
+  }
+
+  /* ── SHIMMER on comp cells ── */
+  .comp-cell { position: relative; overflow: hidden; }
+  .comp-cell::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 3s 2s infinite;
+  }
+  @keyframes shimmer { 0% { left:-100%; } 100% { left:200%; } }
+
+  /* ── FOOTER TAG ── */
+  .footer {
+    text-align: right;
+    margin-top: 18px;
+    font-size: 10px;
+    color: #94a3b8;
+    opacity: 0;
+    animation: fadeIn 1s 2.2s forwards;
+  }
+
+  @media (max-width: 700px) {
+    .body { grid-template-columns: 1fr; }
+    .expert-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>The <span>Nano Banana Pro</span> Prompting Blueprint</h1>
+    <p>Nano Banana is a streamlined AI image generator. To generate professional-grade AI imagery beyond generic results,
+       users must replace vague descriptions with a specific 6-part structural formula that emphasizes
+       technical camera settings and environmental lighting.</p>
+  </div>
+
+  <div class="body">
+
+    <!-- ── LEFT ── -->
+    <div class="left-panel">
+      <div class="section-title">The Six-Part Framework:</div>
+
+      <div class="wheel-wrapper">
+        <!-- SVG wheel segments -->
+        <svg class="wheel-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="g1" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#f97316"/>
+              <stop offset="100%" stop-color="#ef4444"/>
+            </radialGradient>
+            <radialGradient id="g2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#06b6d4"/>
+              <stop offset="100%" stop-color="#0284c7"/>
+            </radialGradient>
+            <radialGradient id="g3" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#10b981"/>
+              <stop offset="100%" stop-color="#0d9488"/>
+            </radialGradient>
+            <radialGradient id="g4" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#8b5cf6"/>
+              <stop offset="100%" stop-color="#6d28d9"/>
+            </radialGradient>
+            <radialGradient id="g5" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#f59e0b"/>
+              <stop offset="100%" stop-color="#d97706"/>
+            </radialGradient>
+            <radialGradient id="g6" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ec4899"/>
+              <stop offset="100%" stop-color="#db2777"/>
+            </radialGradient>
+          </defs>
+
+          <!-- 6 pie segments (60° each, gap 4°) -->
+          <!-- Each segment: large arc from angle to angle -->
+          <!-- Using path arc approach: cx=160, cy=160, r=128 inner=60 -->
+
+          <g transform="translate(160,160)">
+            <!-- Segment 1: SUBJECT 330°-30° (top) -->
+            <path d="M0,0 L111,-64 A128,128 0 0,1 111,64 Z"
+                  fill="url(#g1)" opacity="0.9"
+                  transform="rotate(-90)" style="animation:fadeIn 0.4s 0.6s both"/>
+            <!-- Segment 2: ACTION 30°-90° -->
+            <path d="M0,0 L111,-64 A128,128 0 0,1 111,64 Z"
+                  fill="url(#g2)" opacity="0.9"
+                  transform="rotate(-30)" style="animation:fadeIn 0.4s 0.7s both"/>
+            <!-- Segment 3: ENVIRONMENT 90°-150° -->
+            <path d="M0,0 L111,-64 A128,128 0 0,1 111,64 Z"
+                  fill="url(#g3)" opacity="0.9"
+                  transform="rotate(30)" style="animation:fadeIn 0.4s 0.8s both"/>
+            <!-- Segment 4: ART STYLE 150°-210° -->
+            <path d="M0,0 L111,-64 A128,128 0 0,1 111,64 Z"
+                  fill="url(#g4)" opacity="0.9"
+                  transform="rotate(90)" style="animation:fadeIn 0.4s 0.9s both"/>
+            <!-- Segment 5: LIGHTING 210°-270° -->
+            <path d="M0,0 L111,-64 A128,128 0 0,1 111,64 Z"
+                  fill="url(#g5)" opacity="0.9"
+                  transform="rotate(150)" style="animation:fadeIn 0.4s 1.0s both"/>
+            <!-- Segment 6: DETAILS 270°-330° -->
+            <path d="M0,0 L111,-64 A128,128 0 0,1 111,64 Z"
+                  fill="url(#g6)" opacity="0.9"
+                  transform="rotate(210)" style="animation:fadeIn 0.4s 1.1s both"/>
+
+            <!-- inner white circle (donut hole) -->
+            <circle r="60" fill="white"/>
+          </g>
+
+          <!-- connector dots -->
+          <circle cx="160" cy="30"  r="5" fill="#f97316"/>
+          <circle cx="271" cy="95"  r="5" fill="#06b6d4"/>
+          <circle cx="271" cy="225" r="5" fill="#10b981"/>
+          <circle cx="160" cy="290" r="5" fill="#8b5cf6"/>
+          <circle cx="49"  cy="225" r="5" fill="#f59e0b"/>
+          <circle cx="49"  cy="95"  r="5" fill="#ec4899"/>
+        </svg>
+
+        <!-- center text -->
+        <div class="wheel-center">Precision Over<br>Vague Adjectives</div>
+
+        <!-- outer labels -->
+        <div class="wheel-labels">
+          <div class="w-label subject">
+            <strong>SUBJECT</strong>
+            <span>Combine Subject</span>
+          </div>
+          <div class="w-label action">
+            <strong>ACTION</strong>
+            <span>Action</span>
+          </div>
+          <div class="w-label env">
+            <strong>ENVIRONMENT</strong>
+            <span>Environment</span>
+          </div>
+          <div class="w-label art">
+            <strong>Art Style</strong>
+            <span>(Use specific camera<br>models like "Canon SD<br>Mark IV" to define<br>image quality.)</span>
+          </div>
+          <div class="w-label lighting">
+            <strong>Lighting</strong>
+            <span>(Replace "nice lighting"<br>with "dramatic window<br>lighting creating a rim<br>light effect.")</span>
+          </div>
+          <div class="w-label details">
+            <strong>DETAILS</strong>
+            <span>Details for<br>consistency.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT ── -->
+    <div class="right-panel">
+
+      <!-- Comparison -->
+      <div class="comparison">
+        <div class="section-title">Beginner vs. Pro Formula Prompts</div>
+        <div class="comp-grid" style="margin-top:10px;">
+          <div class="comp-header beginner">Beginner Prompt</div>
+          <div class="comp-header pro">Pro Formula Prompt</div>
+
+          <div class="comp-cell beginner-cell"><strong>Lifestyle:</strong> Woman in cafe</div>
+          <div class="comp-cell pro-cell"><strong>Lifestyle:</strong> Woman, smiling, cozy cafe, Canon 5D, natural window light.</div>
+
+          <div class="comp-cell beginner-cell"><strong>Portrait:</strong> Professional man</div>
+          <div class="comp-cell pro-cell"><strong>Portrait:</strong> Executive, 85mm lens, medium format film, dramatic rim lighting.</div>
+
+          <div class="comp-cell beginner-cell"><strong>Product:</strong> High-end watch</div>
+          <div class="comp-cell pro-cell"><strong>Product:</strong> Watch face, macro lens, sharp craftsmanship details, controlled studio lighting.</div>
+        </div>
+      </div>
+
+      <!-- Expert Techniques -->
+      <div class="expert">
+        <div class="section-title">Expert Techniques for Pro Results</div>
+        <div class="expert-grid">
+
+          <div class="technique-card">
+            <div class="tech-icon cam">📷</div>
+            <h4>Portraiture &amp;<br>Lens Compression</h4>
+            <p>Specifying an 85mm lens on medium format film ensures professional background bokeh.</p>
+          </div>
+
+          <div class="technique-card">
+            <div class="tech-icon arch">🏙️</div>
+            <h4>Architectural<br>"Golden Hour"</h4>
+            <p>Use timing specifications to dictate how light interacts with form and materials.</p>
+          </div>
+
+          <div class="technique-card">
+            <div class="tech-icon auth">🚶</div>
+            <h4>The Authenticity<br>Rule</h4>
+            <p>In street photography, specify "candid moments" to avoid a staged, artificial look.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- .body -->
+
+  <div class="footer">NotebookLM &nbsp;·&nbsp; Nano Banana Pro Blueprint</div>
+</div><!-- .card -->
+
+<script>
+  // Animate comparison rows in with stagger
+  document.querySelectorAll('.comp-cell').forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(8px)';
+    el.style.transition = `opacity 0.4s ${1.0 + i * 0.08}s, transform 0.4s ${1.0 + i * 0.08}s`;
+    setTimeout(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, 50);
+  });
+
+  // Pause wheel on hover
+  const wheel = document.querySelector('.wheel-svg');
+  wheel.addEventListener('mouseenter', () => wheel.style.animationPlayState = 'paused');
+  wheel.addEventListener('mouseleave', () => wheel.style.animationPlayState = 'running');
+
+  // Segment highlight on hover
+  document.querySelectorAll('.wheel-svg path').forEach(seg => {
+    seg.style.transition = 'opacity 0.2s, filter 0.2s';
+    seg.addEventListener('mouseenter', () => {
+      seg.style.opacity = '1';
+      seg.style.filter = 'brightness(1.2) drop-shadow(0 0 8px rgba(0,0,0,0.3))';
+    });
+    seg.addEventListener('mouseleave', () => {
+      seg.style.opacity = '0.9';
+      seg.style.filter = 'none';
+    });
+  });
+</script>
+</body>
+</html>
