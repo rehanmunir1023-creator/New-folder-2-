@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Nano Banana Pro Prompting Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #030812;
+    --cyan:    #00e5ff;
+    --mag:     #e040fb;
+    --orange:  #ff6d00;
+    --gold:    #ffd740;
+    --purple:  #7c4dff;
+    --green:   #00e676;
+    --text:    #ecf0ff;
+    --muted:   #4a6080;
+    --card:    rgba(5,15,35,.95);
+  }
+
+  html, body { width: 100%; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.07) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse 140% 100% at 50% 50%, transparent 35%, rgba(3,8,18,.75) 100%);
+  }
+
+  /* ── Scanline ── */
+  @keyframes scan { from { top: -2px; } to { top: 100%; } }
+  .scanline {
+    position: fixed; left: 0; width: 100%; height: 2px; z-index: 1; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(0,229,255,.4), transparent);
+    animation: scan 4s linear infinite;
+  }
+
+  /* ── Corner brackets ── */
+  .corner { position: fixed; width: 48px; height: 48px; z-index: 2; pointer-events: none; }
+  .corner.tl { top: 18px; left: 18px; border-top: 2px solid rgba(0,229,255,.7); border-left: 2px solid rgba(0,229,255,.7); }
+  .corner.tr { top: 18px; right: 18px; border-top: 2px solid rgba(0,229,255,.7); border-right: 2px solid rgba(0,229,255,.7); }
+  .corner.bl { bottom: 18px; left: 18px; border-bottom: 2px solid rgba(0,229,255,.7); border-left: 2px solid rgba(0,229,255,.7); }
+  .corner.br { bottom: 18px; right: 18px; border-bottom: 2px solid rgba(0,229,255,.7); border-right: 2px solid rgba(0,229,255,.7); }
+
+  /* ── Layout wrapper ── */
+  .wrapper { position: relative; z-index: 3; max-width: 1600px; margin: 0 auto; padding: 0 32px 40px; }
+
+  /* ── Keyframe helpers ── */
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+  @keyframes scaleIn  { from { opacity:0; transform:scale(.4); } to { opacity:1; transform:scale(1); } }
+  @keyframes slideR   { from { opacity:0; transform:translateX(-24px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes slideL   { from { opacity:0; transform:translateX(24px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes lineGrow { from { width:0; } to { width:100%; } }
+  @keyframes spin     { to { transform: rotate(360deg); } }
+  @keyframes pulse    { 0%,100% { opacity:.35; } 50% { opacity:.7; } }
+  @keyframes drawLine { from { stroke-dashoffset: 200; } to { stroke-dashoffset: 0; } }
+
+  .anim { opacity: 0; animation-fill-mode: both; animation-timing-function: cubic-bezier(.22,.68,0,1.2); }
+
+  /* ── Title ── */
+  .title-section { text-align: center; padding: 36px 20px 18px; }
+  .title { font-family: 'Orbitron', monospace; font-size: clamp(28px,3.5vw,54px); font-weight: 900; line-height: 1.2; letter-spacing: .04em; }
+  .title .gold { color: var(--gold); text-shadow: 0 0 18px var(--gold), 0 0 36px rgba(255,215,64,.4); }
+  .title .cyan { color: var(--cyan); text-shadow: 0 0 18px var(--cyan), 0 0 36px rgba(0,229,255,.4); }
+  .subtitle { font-size: clamp(13px,1.1vw,18px); color: var(--muted); margin-top: 10px; line-height: 1.6; max-width: 1000px; margin-left: auto; margin-right: auto; }
+  .subtitle .hl { color: var(--cyan); }
+  .divider { height: 1px; background: linear-gradient(90deg,transparent,var(--cyan),var(--mag),var(--cyan),transparent); box-shadow: 0 0 8px rgba(0,229,255,.4); margin: 16px auto; animation: lineGrow .8s .5s ease both; width: 0; }
+
+  /* ── Main grid ── */
+  .main-grid { display: grid; grid-template-columns: 55% 45%; gap: 0; border-top: 1px solid rgba(0,229,255,.12); min-height: 680px; }
+  .left-panel { border-right: 1px solid rgba(0,229,255,.12); padding: 20px 16px 20px 32px; }
+  .right-panel { display: flex; flex-direction: column; }
+  .right-top { flex: 1; border-bottom: 1px solid rgba(0,229,255,.12); padding: 16px 24px 12px 18px; }
+  .right-bot { flex: 1; padding: 12px 24px 14px 18px; }
+
+  /* ── Section headers ── */
+  .sec-head { font-family: 'Orbitron', monospace; font-weight: 700; letter-spacing: .07em; margin-bottom: 12px; }
+  .sec-head.lg { font-size: clamp(16px,1.6vw,26px); }
+  .sec-head.md { font-size: clamp(14px,1.3vw,21px); }
+  .sec-head.sm { font-size: clamp(13px,1.1vw,18px); }
+
+  /* ── Wheel ── */
+  .wheel-wrap { position: relative; width: 100%; padding-top: 8px; }
+  .wheel-svg-wrap { position: relative; width: min(580px,100%); margin: 0 auto; }
+  .wheel-svg-wrap svg { width: 100%; height: auto; }
+
+  /* ring spin */
+  @keyframes ringRotate { to { transform: rotate(360deg); transform-origin: center; } }
+  .dashed-ring { animation: ringRotate 20s linear infinite; transform-origin: 285px 305px; }
+
+  /* connection lines */
+  .conn-line { stroke-dasharray: 200; stroke-dashoffset: 200; animation: drawLine .4s ease forwards; }
+
+  /* wheel labels */
+  .wheel-labels { position: absolute; inset: 0; }
+  .wlabel { position: absolute; transform: translate(-50%,-50%); text-align: center; }
+  .wlabel .name { font-family: 'Orbitron', monospace; font-size: clamp(9px,.7vw,13px); font-weight: 700; letter-spacing: .1em; }
+  .wlabel .desc { font-size: clamp(9px,.6vw,11px); color: var(--muted); line-height: 1.4; white-space: pre-line; margin-top: 2px; }
+
+  /* center text */
+  .wheel-center-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -54%); text-align: center; pointer-events: none; }
+  .wheel-center-text .icon { font-size: clamp(20px,2vw,32px); line-height: 1; }
+  .wheel-center-text .ct { font-family: 'Orbitron', monospace; font-size: clamp(9px,.7vw,13px); font-weight: 700; line-height: 1.35; margin-top: 4px; }
+  .wheel-center-text .ct .cy { color: var(--cyan); text-shadow: 0 0 8px rgba(0,229,255,.6); }
+
+  /* ── Comparison ── */
+  .col-heads { display: flex; gap: 8px; margin-bottom: 8px; }
+  .ch-spacer { width: 74px; flex-shrink: 0; }
+  .ch-beg, .ch-pro { flex: 1; border-radius: 6px; padding: 5px 10px; font-family: 'Orbitron', monospace; font-size: clamp(10px,.75vw,12px); text-align: center; }
+  .ch-beg { background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.35); color: var(--cyan); text-shadow: 0 0 6px rgba(0,229,255,.5); flex: 1; }
+  .ch-pro { background: rgba(224,64,251,.08); border: 1px solid rgba(224,64,251,.35); color: var(--mag); text-shadow: 0 0 6px rgba(224,64,251,.5); flex: 1.55; }
+
+  .comp-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .row-label { width: 74px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+  .row-label .icon { font-size: 18px; }
+  .row-label .type { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; color: var(--gold); text-align: center; line-height: 1.2; }
+  .row-beg, .row-pro { border-radius: 6px; padding: 8px 10px; font-size: clamp(11px,.8vw,13px); color: var(--text); display: flex; align-items: center; }
+  .row-beg { flex: 1; background: rgba(0,229,255,.04); border: 1px solid rgba(0,229,255,.18); }
+  .row-pro { flex: 1.55; background: rgba(224,64,251,.04); border: 1px solid rgba(224,64,251,.18); line-height: 1.45; }
+
+  /* ── Expert cards ── */
+  .expert-cards { display: flex; gap: 10px; }
+  .ecard { flex: 1; background: var(--card); border-radius: 10px; padding: 12px 13px; }
+  .ecard .eicon { font-size: clamp(18px,1.6vw,26px); margin-bottom: 6px; }
+  .ecard .etitle { font-family: 'Orbitron', monospace; font-size: clamp(9px,.7vw,12px); font-weight: 700; line-height: 1.35; margin-bottom: 6px; white-space: pre-line; }
+  .ecard .edesc { font-size: clamp(11px,.75vw,13px); color: var(--muted); line-height: 1.5; }
+
+  /* glow helpers */
+  .glow-cy  { text-shadow: 0 0 12px var(--cyan),  0 0 24px rgba(0,229,255,.4); }
+  .glow-or  { text-shadow: 0 0 12px var(--orange),0 0 24px rgba(255,109,0,.4); }
+  .glow-gr  { text-shadow: 0 0 12px var(--green), 0 0 24px rgba(0,230,118,.4); }
+
+  /* delay classes */
+  .d0  { animation-delay: .1s; }  .d1  { animation-delay: .3s; }
+  .d2  { animation-delay: .5s; }  .d3  { animation-delay: .7s; }
+  .d4  { animation-delay: .9s; }  .d5  { animation-delay:1.1s; }
+  .d6  { animation-delay:1.3s; }  .d7  { animation-delay:1.5s; }
+  .d8  { animation-delay:1.7s; }  .d9  { animation-delay:1.9s; }
+  .d10 { animation-delay:2.1s; }  .d11 { animation-delay:2.3s; }
+  .d12 { animation-delay:2.5s; }  .d13 { animation-delay:2.7s; }
+  .d14 { animation-delay:2.9s; }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid rgba(0,229,255,.12); }
+    .wheel-svg-wrap { max-width: 480px; }
+  }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+
+<div class="wrapper">
+
+  <!-- ── Title ── -->
+  <div class="title-section">
+    <h1 class="title anim d0" style="animation-name:fadeUp;animation-duration:.8s;">
+      The <span class="gold">Nano Banana Pro</span> <span class="cyan">Prompting Blueprint</span>
+    </h1>
+    <p class="subtitle anim d2" style="animation-name:fadeIn;animation-duration:.8s;">
+      Nano Banana is a streamlined AI image generator. Replace vague descriptions with a specific
+      <span class="hl">6-part structural formula</span> that emphasises technical camera settings and environmental lighting.
+    </p>
+    <div class="divider"></div>
+  </div>
+
+  <!-- ── Main grid ── -->
+  <div class="main-grid">
+
+    <!-- LEFT: Wheel -->
+    <div class="left-panel">
+      <div class="sec-head lg cyan glow-cy anim d3" style="animation-name:slideR;animation-duration:.7s;">
+        The Six-Part Framework
+      </div>
+
+      <div class="wheel-wrap">
+        <div class="wheel-svg-wrap">
+          <svg viewBox="0 0 570 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="gf"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <radialGradient id="cgrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#0a1a40"/>
+                <stop offset="100%" stop-color="#030812"/>
+              </radialGradient>
+            </defs>
+
+            <!-- Outer rotating dashed ring -->
+            <circle class="dashed-ring" cx="285" cy="305" r="183" stroke="#00e5ff" stroke-width="1" stroke-opacity=".25" stroke-dasharray="8 12"/>
+
+            <!-- Main ring -->
+            <circle cx="285" cy="305" r="155" fill="url(#cgrad)" stroke="#00e5ff" stroke-width="2.5" stroke-opacity=".85" filter="url(#gf)"
+              class="anim d4" style="animation-name:scaleIn;animation-duration:.6s;"/>
+            <!-- Inner accent ring -->
+            <circle cx="285" cy="305" r="133" fill="none" stroke="#e040fb" stroke-width="1" stroke-opacity=".3" stroke-dasharray="4 8"
+              class="anim d4" style="animation-name:fadeIn;animation-duration:.8s;"/>
+
+            <!-- Connection lines (each delayed) -->
+            <!-- SUBJECT  angle=28  -->
+            <line class="conn-line anim d5" style="animation-name:fadeIn;animation-duration:.01s;" x1="421" y1="233" x2="462" y2="197" stroke="#ffd740" stroke-width="1.5" stroke-opacity=".75"/>
+            <!-- ACTION   angle=100 -->
+            <line class="conn-line anim d6" style="animation-name:fadeIn;" x1="438" y1="332" x2="488" y2="348" stroke="#ff6d00" stroke-width="1.5" stroke-opacity=".75"/>
+            <!-- ENV      angle=162 -->
+            <line class="conn-line anim d7" style="animation-name:fadeIn;" x1="420" y1="400" x2="458" y2="440" stroke="#00e5ff" stroke-width="1.5" stroke-opacity=".75"/>
+            <!-- ART      angle=218 -->
+            <line class="conn-line anim d8" style="animation-name:fadeIn;" x1="165" y1="400" x2="120" y2="440" stroke="#e040fb" stroke-width="1.5" stroke-opacity=".75"/>
+            <!-- LIGHT    angle=272 -->
+            <line class="conn-line anim d9" style="animation-name:fadeIn;" x1="130" y1="305" x2="72" y2="305" stroke="#7c4dff" stroke-width="1.5" stroke-opacity=".75"/>
+            <!-- DETAILS  angle=332 -->
+            <line class="conn-line anim d10" style="animation-name:fadeIn;" x1="165" y1="210" x2="120" y2="170" stroke="#00e676" stroke-width="1.5" stroke-opacity=".75"/>
+
+            <!-- Center glow dot -->
+            <circle cx="285" cy="305" r="6" fill="#00e5ff" filter="url(#gf)" class="anim d4" style="animation-name:scaleIn;animation-duration:.4s;"/>
+          </svg>
+
+          <!-- Center overlay text -->
+          <div class="wheel-center-text anim d5" style="animation-name:fadeIn;animation-duration:.6s;">
+            <div class="icon">🔭</div>
+            <div class="ct">Precision Over<br/><span class="cy">Vague Adjectives</span></div>
+          </div>
+
+          <!-- Wheel labels -->
+          <div class="wheel-labels">
+            <!-- SUBJECT top-right ~28° -->
+            <div class="wlabel anim d5" style="animation-name:scaleIn;animation-duration:.5s;left:84%;top:28%;">
+              <div class="name" style="color:var(--gold);text-shadow:0 0 8px rgba(255,215,64,.6);">SUBJECT</div>
+              <div class="desc">Combine Subject</div>
+            </div>
+            <!-- ACTION right ~100° -->
+            <div class="wlabel anim d6" style="animation-name:scaleIn;animation-duration:.5s;left:93%;top:57%;">
+              <div class="name" style="color:var(--orange);text-shadow:0 0 8px rgba(255,109,0,.6);">ACTION</div>
+              <div class="desc">Action</div>
+            </div>
+            <!-- ENV bottom-right ~162° -->
+            <div class="wlabel anim d7" style="animation-name:scaleIn;animation-duration:.5s;left:83%;top:74%;">
+              <div class="name" style="color:var(--cyan);text-shadow:0 0 8px rgba(0,229,255,.6);">ENVIRONMENT</div>
+              <div class="desc">Environment</div>
+            </div>
+            <!-- ART STYLE bottom-left ~218° -->
+            <div class="wlabel anim d8" style="animation-name:scaleIn;animation-duration:.5s;left:14%;top:74%;text-align:right;">
+              <div class="name" style="color:var(--mag);text-shadow:0 0 8px rgba(224,64,251,.6);">ART STYLE</div>
+              <div class="desc">Use camera models&#10;like "Canon SD Mark IV"&#10;to define image quality.</div>
+            </div>
+            <!-- LIGHTING left ~272° -->
+            <div class="wlabel anim d9" style="animation-name:scaleIn;animation-duration:.5s;left:4%;top:50%;text-align:right;">
+              <div class="name" style="color:var(--purple);text-shadow:0 0 8px rgba(124,77,255,.6);">LIGHTING</div>
+              <div class="desc">Replace "nice lighting"&#10;with "dramatic window&#10;lighting rim effect."</div>
+            </div>
+            <!-- DETAILS top-left ~332° -->
+            <div class="wlabel anim d10" style="animation-name:scaleIn;animation-duration:.5s;left:14%;top:28%;text-align:right;">
+              <div class="name" style="color:var(--green);text-shadow:0 0 8px rgba(0,230,118,.6);">DETAILS</div>
+              <div class="desc">Details for&#10;consistency.</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /wheel-wrap -->
+    </div><!-- /left-panel -->
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+
+      <!-- Beginner vs Pro -->
+      <div class="right-top">
+        <div class="sec-head md anim d5" style="animation-name:slideL;animation-duration:.7s;">
+          Beginner vs. <span style="color:var(--orange);" class="glow-or">Pro Formula</span> Prompts
+        </div>
+
+        <div class="col-heads anim d6" style="animation-name:fadeIn;animation-duration:.6s;">
+          <div class="ch-spacer"></div>
+          <div class="ch-beg">Beginner Prompt</div>
+          <div class="ch-pro">Pro Formula Prompt</div>
+        </div>
+
+        <!-- Row 1 -->
+        <div class="comp-row anim d7" style="animation-name:fadeUp;animation-duration:.5s;">
+          <div class="row-label"><div class="icon">☕</div><div class="type">Lifestyle:</div></div>
+          <div class="row-beg">Woman in cafe</div>
+          <div class="row-pro">Woman, smiling, cozy cafe, Canon 5D, natural window light.</div>
+        </div>
+        <!-- Row 2 -->
+        <div class="comp-row anim d8" style="animation-name:fadeUp;animation-duration:.5s;">
+          <div class="row-label"><div class="icon">👤</div><div class="type">Portrait:</div></div>
+          <div class="row-beg">Professional man</div>
+          <div class="row-pro">Executive, 85mm lens, medium format film, dramatic rim lighting.</div>
+        </div>
+        <!-- Row 3 -->
+        <div class="comp-row anim d9" style="animation-name:fadeUp;animation-duration:.5s;">
+          <div class="row-label"><div class="icon">⌚</div><div class="type">Product:</div></div>
+          <div class="row-beg">High-end watch</div>
+          <div class="row-pro">Watch face, macro lens, sharp craftsmanship details, controlled studio lighting.</div>
+        </div>
+      </div><!-- /right-top -->
+
+      <!-- Expert Techniques -->
+      <div class="right-bot">
+        <div class="sec-head sm anim d10" style="animation-name:slideL;animation-duration:.7s;">
+          Expert Techniques for <span style="color:var(--green);" class="glow-gr">Pro Results</span>
+        </div>
+
+        <div class="expert-cards">
+          <div class="ecard anim d11" style="animation-name:fadeUp;animation-duration:.5s;border:1px solid rgba(0,229,255,.3);box-shadow:0 0 24px rgba(0,229,255,.1);">
+            <div class="eicon">📸</div>
+            <div class="etitle" style="color:var(--cyan);text-shadow:0 0 6px rgba(0,229,255,.5);">Portraiture &amp;{'\n'}Lens Compression</div>
+            <div class="edesc">Specifying an 85mm lens on medium format film ensures professional background bokeh.</div>
+          </div>
+          <div class="ecard anim d12" style="animation-name:fadeUp;animation-duration:.5s;border:1px solid rgba(255,215,64,.3);box-shadow:0 0 24px rgba(255,215,64,.1);">
+            <div class="eicon">🏛️</div>
+            <div class="etitle" style="color:var(--gold);text-shadow:0 0 6px rgba(255,215,64,.5);">Architectural
+"Golden Hour"</div>
+            <div class="edesc">Use timing specifications to dictate how light interacts with form and materials.</div>
+          </div>
+          <div class="ecard anim d13" style="animation-name:fadeUp;animation-duration:.5s;border:1px solid rgba(255,109,0,.3);box-shadow:0 0 24px rgba(255,109,0,.1);">
+            <div class="eicon">🎭</div>
+            <div class="etitle" style="color:var(--orange);text-shadow:0 0 6px rgba(255,109,0,.5);">The Authenticity
+Rule</div>
+            <div class="edesc">In street photography, specify "candid moments" to avoid a staged, artificial look.</div>
+          </div>
+        </div>
+      </div><!-- /right-bot -->
+
+    </div><!-- /right-panel -->
+  </div><!-- /main-grid -->
+</div><!-- /wrapper -->
+</body>
+</html>
