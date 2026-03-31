@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motion Transfer / Motion Control — Remotion Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  /* 16:9 stage */
+  .stage {
+    position: relative;
+    width: min(96vw, 960px);
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: 6px;
+    box-shadow: 0 0 80px rgba(0,0,0,0.8);
+  }
+
+  /* ── BACKGROUND ── */
+  .bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 120% 80% at 50% 50%,
+      #0d2a4a 0%, #071526 55%, #030c18 100%);
+    opacity: 0;
+    animation: fadeIn 0.7s 0s forwards;
+  }
+  .dot-grid {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(100,160,220,0.18) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0;
+    animation: fadeIn 0.7s 0.2s forwards;
+  }
+
+  /* ── TECH GRID (bottom-left) ── */
+  .tech-grid {
+    position: absolute;
+    bottom: -10px; left: -10px;
+    width: 480px; height: 300px;
+    opacity: 0;
+    animation: gridReveal 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  .tech-grid svg { width: 100%; height: 100%; }
+
+  @keyframes gridReveal {
+    0%   { opacity: 0; clip-path: inset(0 100% 0 0); }
+    10%  { opacity: 0.28; }
+    100% { opacity: 0.28; clip-path: inset(0 0% 0 0); }
+  }
+
+  /* dot pulse on the grid */
+  .grid-dot {
+    animation: dotPulse 2.4s 1.9s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%,100% { opacity: 0.45; }
+    50%      { opacity: 1; }
+  }
+
+  /* ── BADGE ── */
+  .badge-wrap {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, calc(-50% - 26px));
+    opacity: 0;
+    animation: badgeIn 0.6s 1.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes badgeIn {
+    from { opacity: 0; transform: translate(-50%, calc(-50% - 26px - 14px)); }
+    to   { opacity: 1; transform: translate(-50%, calc(-50% - 26px)); }
+  }
+
+  .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #1a4a7a 0%, #1e5a9a 100%);
+    border: 1px solid rgba(100,180,255,0.35);
+    border-radius: 999px;
+    padding: 5px 20px;
+    box-shadow: 0 2px 20px rgba(30,90,160,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+  .badge span {
+    font-weight: 300;
+    font-size: clamp(10px, 1.4vw, 14px);
+    letter-spacing: 0.06em;
+    color: rgba(210,230,255,0.9);
+  }
+
+  /* ── TITLE ── */
+  .title-wrap {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, calc(-50% + 18px));
+    opacity: 0;
+    animation: titleIn 0.7s 1.95s cubic-bezier(0.34,1.4,0.64,1) forwards;
+    white-space: nowrap;
+  }
+  @keyframes titleIn {
+    from { opacity: 0; transform: translate(-50%, calc(-50% + 18px + 22px)); }
+    to   { opacity: 1; transform: translate(-50%, calc(-50% + 18px)); }
+  }
+
+  .title {
+    font-weight: 300;
+    font-size: clamp(18px, 3.6vw, 46px);
+    letter-spacing: 0.01em;
+    color: rgba(235,245,255,0.96);
+    text-shadow: 0 0 60px rgba(80,160,255,0.25);
+  }
+
+  /* shared */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── SCRUBBER ── */
+  .controls {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 12px;
+    width: min(96vw, 960px);
+  }
+  .controls button {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.15s;
+  }
+  .controls button:hover { background: #334155; }
+  .label { font-size: 11px; color: #64748b; text-align: right; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <!-- Background -->
+  <div class="bg"></div>
+  <div class="dot-grid"></div>
+
+  <!-- Tech grid SVG -->
+  <div class="tech-grid">
+    <svg viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg">
+      <!-- horizontal lines -->
+      <line x1="0" y1="0"   x2="480" y2="0"   stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="0" y1="75"  x2="480" y2="75"  stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="0" y1="150" x2="480" y2="150" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="0" y1="225" x2="480" y2="225" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="0" y1="300" x2="480" y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <!-- vertical lines -->
+      <line x1="0"   y1="0" x2="0"   y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="96"  y1="0" x2="96"  y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="192" y1="0" x2="192" y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="288" y1="0" x2="288" y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="384" y1="0" x2="384" y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <line x1="480" y1="0" x2="480" y2="300" stroke="rgba(100,180,255,0.55)" stroke-width="0.8"/>
+      <!-- intersection dots -->
+      <circle class="grid-dot" cx="0"   cy="0"   r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="96"  cy="0"   r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="192" cy="0"   r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="288" cy="0"   r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="384" cy="0"   r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="480" cy="0"   r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="0"   cy="75"  r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="96"  cy="75"  r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="192" cy="75"  r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="288" cy="75"  r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="384" cy="75"  r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="480" cy="75"  r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="0"   cy="150" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="96"  cy="150" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="192" cy="150" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="288" cy="150" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="384" cy="150" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="480" cy="150" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="0"   cy="225" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="96"  cy="225" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="192" cy="225" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="288" cy="225" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="384" cy="225" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="480" cy="225" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="0"   cy="300" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="96"  cy="300" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="192" cy="300" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="288" cy="300" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="384" cy="300" r="3.5" fill="rgba(120,200,255,0.7)"/>
+      <circle class="grid-dot" cx="480" cy="300" r="3.5" fill="rgba(120,200,255,0.7)"/>
+    </svg>
+  </div>
+
+  <!-- Badge -->
+  <div class="badge-wrap">
+    <div class="badge"><span>Method #1</span></div>
+  </div>
+
+  <!-- Title -->
+  <div class="title-wrap">
+    <h1 class="title">Motion Transfer&nbsp;/&nbsp;Motion Control</h1>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="replayBtn">↺ Replay</button>
+  <span>7 s &nbsp;·&nbsp; 30 fps &nbsp;·&nbsp; 1920×1080 &nbsp;·&nbsp; Remotion preview</span>
+</div>
+
+<script>
+  document.getElementById('replayBtn').addEventListener('click', () => {
+    const stage = document.getElementById('stage');
+    // Clone & replace to restart all CSS animations
+    const clone = stage.cloneNode(true);
+    stage.parentNode.replaceChild(clone, stage);
+    document.getElementById('replayBtn').addEventListener('click', arguments.callee);
+  });
+</script>
+</body>
+</html>
